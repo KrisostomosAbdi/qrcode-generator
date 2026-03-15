@@ -1,60 +1,265 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>QR Generator</title>
-<style>
-body{
-    font-family:Arial;
-    text-align:center;
-    margin-top:40px;
-}
-input,button{
-    padding:10px;
-    margin:6px;
-    width:280px;
-}
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>QR Generator</title>
+  <style>
+    :root{
+      --accent:#2c7be5;
+      --bg:#f7f9fc;
+      --card:#ffffff;
+      --muted:#6b7280;
+      --radius:10px;
+      --gap:12px;
+      font-family: Inter, Arial, Helvetica, sans-serif;
+    }
+
+    html,body{
+      height:100%;
+      margin:0;
+      background:linear-gradient(180deg,var(--bg),#eef4fb);
+      color:#0f172a;
+    }
+
+    .wrap{
+      min-height:100%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:32px 16px;
+      box-sizing:border-box;
+    }
+
+    .card{
+      width:100%;
+      max-width:420px;
+      background:var(--card);
+      border-radius:var(--radius);
+      box-shadow:0 8px 30px rgba(15,23,42,0.08);
+      padding:22px;
+      text-align:center;
+    }
+
+    h1{
+      margin:0 0 12px 0;
+      font-size:20px;
+      letter-spacing:0.2px;
+    }
+
+    p.lead{
+      margin:0 0 18px 0;
+      color:var(--muted);
+      font-size:13px;
+    }
+
+    form{
+      display:grid;
+      gap:var(--gap);
+      margin-bottom:14px;
+    }
+
+    label{
+      display:block;
+      text-align:left;
+      font-size:13px;
+      color:var(--muted);
+      margin-bottom:6px;
+    }
+
+    input[type="url"],
+    input[type="text"]{
+      width:100%;
+      box-sizing:border-box;
+      padding:12px 14px;
+      border:1px solid #e6eef8;
+      border-radius:8px;
+      font-size:14px;
+      outline:none;
+      transition:box-shadow .15s, border-color .15s;
+    }
+
+    input:focus{
+      border-color:var(--accent);
+      box-shadow:0 4px 18px rgba(44,123,229,0.12);
+    }
+
+    .controls{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+    }
+
+    button.generate{
+      background:var(--accent);
+      color:white;
+      border:none;
+      padding:10px 16px;
+      border-radius:8px;
+      cursor:pointer;
+      font-weight:600;
+      flex:1 1 auto;
+      min-width:140px;
+    }
+
+    button.generate:disabled{
+      opacity:0.6;
+      cursor:not-allowed;
+    }
+
+    a.download{
+      display:inline-block;
+      text-decoration:none;
+      background:#0b1220;
+      color:white;
+      padding:10px 14px;
+      border-radius:8px;
+      font-weight:600;
+      margin-top:12px;
+    }
+
+    .preview{
+      margin-top:16px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:12px;
+      flex-direction:column;
+    }
+
+    canvas#qr{
+      background:white;
+      border-radius:8px;
+      box-shadow:0 6px 18px rgba(15,23,42,0.06);
+      width:100%;
+      max-width:300px;
+      height:auto;
+    }
+
+    .note{
+      font-size:12px;
+      color:var(--muted);
+      margin-top:8px;
+    }
+
+    @media (max-width:420px){
+      .card{ padding:18px; }
+      h1{ font-size:18px; }
+    }
+  </style>
 </head>
-
 <body>
+  <div class="wrap">
+    <div class="card" role="region" aria-labelledby="title">
+      <h1 id="title">QR Generator</h1>
+      <p class="lead">Enter a link and download the generated QR code as PNG.</p>
 
-<h2>QR Generator</h2>
+      <form id="qrForm" onsubmit="return false;" novalidate>
+        <div>
+          <label for="link">Link</label>
+          <input id="link" type="url" inputmode="url" placeholder="https://example.com" required aria-required="true" />
+        </div>
 
-<input id="link" placeholder="Enter link"><br>
-<input id="filename" placeholder="Filename"><br>
-<button onclick="generateQR()">Generate</button>
+        <div>
+          <label for="filename">Filename</label>
+          <input id="filename" type="text" placeholder="qr-code" />
+        </div>
 
-<br><br>
+        <div class="controls">
+          <button id="generateBtn" class="generate" type="button">Generate</button>
+        </div>
+      </form>
 
-<canvas id="qr"></canvas><br><br>
+      <div class="preview" aria-live="polite">
+        <canvas id="qr" width="300" height="300" role="img" aria-label="QR code preview"></canvas>
+        <a id="downloadBtn" class="download" style="display:none" download>Download QR</a>
+        <div class="note">Tip: Use a short URL for better scanning reliability.</div>
+      </div>
+    </div>
+  </div>
 
-<a id="downloadBtn" style="display:none;background:#2c7be5;color:white;padding:10px;text-decoration:none;border-radius:6px">
-Download QR
-</a>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.4/qrcode.min.js"></script>
+  <script>
+    (function(){
+      const linkInput = document.getElementById('link');
+      const filenameInput = document.getElementById('filename');
+      const canvas = document.getElementById('qr');
+      const generateBtn = document.getElementById('generateBtn');
+      const downloadBtn = document.getElementById('downloadBtn');
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.4/qrcode.min.js"></script>
+      function setDownload(href, name){
+        downloadBtn.href = href;
+        downloadBtn.download = name;
+        downloadBtn.style.display = 'inline-block';
+      }
 
-<script>
-function generateQR(){
+      function clearDownload(){
+        downloadBtn.style.display = 'none';
+        downloadBtn.removeAttribute('href');
+        downloadBtn.removeAttribute('download');
+      }
 
-    const link = document.getElementById("link").value
-    const filename = document.getElementById("filename").value || "qr-code"
-    const canvas = document.getElementById("qr")
-    const downloadBtn = document.getElementById("downloadBtn")
+      function isValidUrl(value){
+        try{
+          const url = new URL(value);
+          return url.protocol === 'http:' || url.protocol === 'https:';
+        }catch(e){
+          return false;
+        }
+      }
 
-    QRCode.toCanvas(canvas, link, { width:300 }, function(){
+      generateBtn.addEventListener('click', function(){
+        const link = linkInput.value.trim();
+        const filename = (filenameInput.value.trim() || 'qr-code') + '.png';
 
-        const img = canvas.toDataURL("image/png")
+        clearDownload();
 
-        downloadBtn.href = img
-        downloadBtn.download = filename + ".png"
-        downloadBtn.style.display = "inline-block"
+        if(!link){
+          linkInput.focus();
+          alert('Please enter a link to generate a QR code.');
+          return;
+        }
 
-    })
+        if(!isValidUrl(link)){
+          alert('Please enter a valid URL starting with http:// or https://');
+          linkInput.focus();
+          return;
+        }
 
-}
-</script>
+        generateBtn.disabled = true;
+        generateBtn.textContent = 'Generating...';
 
+        // Use the library to draw to canvas. Keep width 300 for crisp PNG.
+        QRCode.toCanvas(canvas, link, { width: 300, margin: 1 }, function(err){
+          generateBtn.disabled = false;
+          generateBtn.textContent = 'Generate';
+
+          if(err){
+            console.error(err);
+            alert('Failed to generate QR code. Check the console for details.');
+            return;
+          }
+
+          try{
+            const img = canvas.toDataURL('image/png');
+            setDownload(img, filename);
+          }catch(e){
+            console.error(e);
+            alert('Unable to prepare download in this browser.');
+          }
+        });
+      });
+
+      // Optional: generate on Enter key when focus is in the link field
+      linkInput.addEventListener('keydown', function(e){
+        if(e.key === 'Enter'){
+          e.preventDefault();
+          generateBtn.click();
+        }
+      });
+    })();
+  </script>
 </body>
 </html>
