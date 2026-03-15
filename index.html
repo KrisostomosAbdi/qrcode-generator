@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>QR Generator</title>
+<style>
+body{
+    font-family:Arial;
+    text-align:center;
+    margin-top:40px;
+}
+input,button{
+    padding:10px;
+    margin:6px;
+    width:280px;
+}
+</style>
+</head>
+
+<body>
+
+<h2>QR Generator</h2>
+
+<input id="link" placeholder="Enter link"><br>
+<input id="filename" placeholder="Filename"><br>
+<button onclick="generateQR()">Generate</button>
+
+<br><br>
+
+<canvas id="qr"></canvas><br><br>
+
+<a id="downloadBtn" style="display:none;background:#2c7be5;color:white;padding:10px;text-decoration:none;border-radius:6px">
+Download QR
+</a>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.4/qrcode.min.js"></script>
+
+<script>
+function generateQR(){
+
+    const link = document.getElementById("link").value
+    const filename = document.getElementById("filename").value || "qr-code"
+    const canvas = document.getElementById("qr")
+    const downloadBtn = document.getElementById("downloadBtn")
+
+    QRCode.toCanvas(canvas, link, { width:300 }, function(){
+
+        const img = canvas.toDataURL("image/png")
+
+        downloadBtn.href = img
+        downloadBtn.download = filename + ".png"
+        downloadBtn.style.display = "inline-block"
+
+    })
+
+}
+</script>
+
+</body>
+</html>
