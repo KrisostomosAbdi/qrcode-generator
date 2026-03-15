@@ -18,8 +18,8 @@
   input:focus{border-color:var(--accent);box-shadow:0 4px 18px rgba(44,123,229,0.12);}
   .controls{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;}
   button.generate{background:var(--accent);color:#fff;border:none;padding:10px 16px;border-radius:8px;cursor:pointer;font-weight:600;flex:1 1 auto;min-width:140px;}
-  a.download{display:inline-block;text-decoration:none;background:#0b1220;color:#fff;padding:10px 14px;border-radius:8px;font-weight:600;margin-top:12px;opacity:0;transition:opacity .25s ease;}
-  a.download.show{opacity:1;}
+  a.download{display:none;text-decoration:none;background:#0b1220;color:#fff;padding:10px 14px;border-radius:8px;font-weight:600;margin-top:12px;opacity:0;transition:opacity .25s ease;}
+  a.download.show{display:inline-block;opacity:1;}
   .preview{margin-top:16px;display:flex;align-items:center;justify-content:center;gap:12px;flex-direction:column;}
   #qrcode{background:#fff;border-radius:8px;box-shadow:0 6px 18px rgba(15,23,42,0.06);width:100%;max-width:300px;padding:12px;box-sizing:border-box;}
   .note{font-size:12px;color:var(--muted);margin-top:8px;}
@@ -51,7 +51,7 @@
 
       <div class="preview" aria-live="polite">
         <div id="qrcode" aria-hidden="false"></div>
-        <a id="downloadBtn" class="download" style="display:inline-block" download>Download QR</a>
+        <a id="downloadBtn" class="download" download>Download QR</a>
         <div class="note">Tip: Use a short URL for better scanning reliability.</div>
       </div>
     </div>
@@ -69,7 +69,6 @@
   let currentObjectUrl = null;
 
   function sanitizeFilename(name){
-    // remove path chars and keep safe chars
     return name.replace(/[^a-z0-9_\-\.]/gi, '_').replace(/_+/g,'_') || 'qr-code';
   }
 
@@ -77,6 +76,15 @@
     downloadBtn.classList.remove('show');
     downloadBtn.removeAttribute('href');
     downloadBtn.removeAttribute('download');
+    downloadBtn.style.display = 'none';
+  }
+
+  function showDownload(href, filename){
+    downloadBtn.href = href;
+    downloadBtn.download = filename;
+    downloadBtn.style.display = 'inline-block';
+    // small timeout to ensure display change is applied before opacity transition
+    requestAnimationFrame(()=> downloadBtn.classList.add('show'));
   }
 
   function revokeCurrentUrl(){
@@ -87,33 +95,24 @@
   }
 
   function prepareDownloadFromRendered(){
-    // look for canvas first, then img
     const canvas = qrContainer.querySelector('canvas');
     const img = qrContainer.querySelector('img');
 
     try{
       if(canvas && canvas.toDataURL){
         const data = canvas.toDataURL('image/png');
-        downloadBtn.href = data;
-        downloadBtn.download = sanitizeFilename((filenameInput.value.trim() || 'qr-code')) + '.png';
-        downloadBtn.classList.add('show');
+        showDownload(data, sanitizeFilename((filenameInput.value.trim() || 'qr-code')) + '.png');
         return true;
       } else if(img && img.src){
-        // convert image src (data: or blob:) to object URL if needed
-        // if it's already data:, just use it
         if(img.src.startsWith('data:')){
-          downloadBtn.href = img.src;
-          downloadBtn.download = sanitizeFilename((filenameInput.value.trim() || 'qr-code')) + '.png';
-          downloadBtn.classList.add('show');
+          showDownload(img.src, sanitizeFilename((filenameInput.value.trim() || 'qr-code')) + '.png');
           return true;
         } else {
-          // fetch the image and create object URL
+          // fetch remote image and create object URL
           fetch(img.src).then(r=>r.blob()).then(blob=>{
             revokeCurrentUrl();
             currentObjectUrl = URL.createObjectURL(blob);
-            downloadBtn.href = currentObjectUrl;
-            downloadBtn.download = sanitizeFilename((filenameInput.value.trim() || 'qr-code')) + '.png';
-            downloadBtn.classList.add('show');
+            showDownload(currentObjectUrl, sanitizeFilename((filenameInput.value.trim() || 'qr-code')) + '.png');
           }).catch(err=>{
             console.error('Could not prepare download from img:', err);
           });
@@ -133,71 +132,53 @@
   }
 
   generateBtn.addEventListener('click', function(){
-    /* Replace only the generateBtn.addEventListener('click', ...) block in your page with this updated version.
-   Everything else in your script can remain the same. */
-generateBtn.addEventListener('click', function(){
-  let raw = linkInput.value.trim();
-  const filename = sanitizeFilename((filenameInput.value.trim() || 'qr-code')) + '.png';
-  hideDownload();
+    let raw = linkInput.value.trim();
+    hideDownload();
 
-  if(!raw){
-    alert('Please enter a link to generate a QR code.');
-    linkInput.focus();
-    return;
-  }
-
-  // If user omitted protocol, prepend https://
-  if(!/^[a-zA-Z][a-zA-Z0-9+\-.]*:\/\//.test(raw)){
-    raw = 'https://' + raw;
-  }
-
-  // basic URL validation using the normalized value
-  try{
-    const u = new URL(raw);
-    if(u.protocol !== 'http:' && u.protocol !== 'https:'){
-      throw new Error('Invalid protocol');
+    if(!raw){
+      alert('Please enter a link to generate a QR code.');
+      linkInput.focus();
+      return;
     }
-  }catch(e){
-    alert('Please enter a valid URL starting with http:// or https://');
-    linkInput.focus();
-    return;
-  }
 
-  // clear previous
-  qrContainer.innerHTML = '';
+    // If user omitted protocol, prepend https://
+    if(!/^[a-zA-Z][a-zA-Z0-9+\-.]*:\/\//.test(raw)){
+      raw = 'https://' + raw.replace(/^\/+/, '');
+      // reflect normalized URL back to input so user sees it
+      linkInput.value = raw;
+    }
 
-  // create QR (qrcodejs) using the normalized URL
-  const qr = new QRCode(qrContainer, {
-    text: raw,
-    width: 300,
-    height: 300,
-    correctLevel: QRCode.CorrectLevel.H
-  });
-
-  // Wait for the library to render; then prepare download.
-  const start = Date.now();
-  const poll = setInterval(()=>{
-    if(prepareDownloadFromRendered()){
-      clearInterval(poll);
-    } else if(Date.now() - start > 1000){
-      clearInterval(poll);
-      if(!prepareDownloadFromRendered()){
-        console.warn('QR rendered but could not prepare download automatically.');
+    // basic URL validation using the normalized value
+    try{
+      const u = new URL(raw);
+      if(u.protocol !== 'http:' && u.protocol !== 'https:'){
+        throw new Error('Invalid protocol');
       }
+    }catch(e){
+      alert('Please enter a valid URL starting with http:// or https://');
+      linkInput.focus();
+      return;
     }
-  }, 80);
-});
+
+    // clear previous
+    qrContainer.innerHTML = '';
+
+    // create QR (qrcodejs) using the normalized URL
+    new QRCode(qrContainer, {
+      text: raw,
+      width: 300,
+      height: 300,
+      correctLevel: QRCode.CorrectLevel.H
     });
 
-    // Wait for the library to render; then prepare download.
-    // Instead of a blind timeout, poll for canvas/img presence for up to 1s.
+    // Poll for rendered canvas/img for up to 1s
     const start = Date.now();
     const poll = setInterval(()=>{
       if(prepareDownloadFromRendered()){
         clearInterval(poll);
       } else if(Date.now() - start > 1000){
         clearInterval(poll);
-        // final attempt: try once more and if still nothing, show a console warning
+        // final attempt
         if(!prepareDownloadFromRendered()){
           console.warn('QR rendered but could not prepare download automatically.');
         }
