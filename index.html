@@ -179,87 +179,111 @@
       </div>
     </div>
   </div>
+  <!-- Paste this <script> block into your page (replace your existing script) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.4/qrcode.min.js"></script>
+<script>
+(function(){
+  const linkInput = document.getElementById('link');
+  const filenameInput = document.getElementById('filename');
+  const canvas = document.getElementById('qr');
+  const generateBtn = document.getElementById('generateBtn');
+  const downloadBtn = document.getElementById('downloadBtn');
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.4/qrcode.min.js"></script>
-  <script>
-    (function(){
-      const linkInput = document.getElementById('link');
-      const filenameInput = document.getElementById('filename');
-      const canvas = document.getElementById('qr');
-      const generateBtn = document.getElementById('generateBtn');
-      const downloadBtn = document.getElementById('downloadBtn');
+  function setDownload(href, name){
+    downloadBtn.href = href;
+    downloadBtn.download = name;
+    downloadBtn.style.display = 'inline-block';
+  }
 
-      function setDownload(href, name){
-        downloadBtn.href = href;
-        downloadBtn.download = name;
-        downloadBtn.style.display = 'inline-block';
+  function clearDownload(){
+    downloadBtn.style.display = 'none';
+    downloadBtn.removeAttribute('href');
+    downloadBtn.removeAttribute('download');
+  }
+
+  function isValidUrl(value){
+    try{
+      const url = new URL(value);
+      return url.protocol === 'http:' || url.protocol === 'https:';
+    }catch(e){
+      return false;
+    }
+  }
+
+  function resetButton(){
+    generateBtn.disabled = false;
+    generateBtn.textContent = 'Generate';
+  }
+
+  generateBtn.addEventListener('click', function(){
+    const link = linkInput.value.trim();
+    const filename = (filenameInput.value.trim() || 'qr-code') + '.png';
+
+    clearDownload();
+
+    if(!link){
+      alert('Please enter a link to generate a QR code.');
+      linkInput.focus();
+      return;
+    }
+
+    if(!isValidUrl(link)){
+      alert('Please enter a valid URL starting with http:// or https://');
+      linkInput.focus();
+      return;
+    }
+
+    generateBtn.disabled = true;
+    generateBtn.textContent = 'Generating...';
+
+    // Fallback timeout: if the library never calls back, reset the UI after 8s
+    const fallback = setTimeout(function(){
+      // Only reset if still disabled (meaning callback didn't run)
+      if(generateBtn.disabled){
+        resetButton();
+        alert('QR generation timed out. Please try again.');
       }
+    }, 8000);
 
-      function clearDownload(){
-        downloadBtn.style.display = 'none';
-        downloadBtn.removeAttribute('href');
-        downloadBtn.removeAttribute('download');
-      }
+    try{
+      QRCode.toCanvas(canvas, link, { width: 300, margin: 1 }, function(err){
+        // clear fallback timer immediately
+        clearTimeout(fallback);
+        resetButton();
 
-      function isValidUrl(value){
+        if(err){
+          // Show the error to the user
+          const msg = (err && err.message) ? err.message : String(err);
+          alert('Failed to generate QR code: ' + msg);
+          console.error('QRCode error:', err);
+          return;
+        }
+
         try{
-          const url = new URL(value);
-          return url.protocol === 'http:' || url.protocol === 'https:';
+          const img = canvas.toDataURL('image/png');
+          setDownload(img, filename);
         }catch(e){
-          return false;
-        }
-      }
-
-      generateBtn.addEventListener('click', function(){
-        const link = linkInput.value.trim();
-        const filename = (filenameInput.value.trim() || 'qr-code') + '.png';
-
-        clearDownload();
-
-        if(!link){
-          linkInput.focus();
-          alert('Please enter a link to generate a QR code.');
-          return;
-        }
-
-        if(!isValidUrl(link)){
-          alert('Please enter a valid URL starting with http:// or https://');
-          linkInput.focus();
-          return;
-        }
-
-        generateBtn.disabled = true;
-        generateBtn.textContent = 'Generating...';
-
-        // Use the library to draw to canvas. Keep width 300 for crisp PNG.
-        QRCode.toCanvas(canvas, link, { width: 300, margin: 1 }, function(err){
-          generateBtn.disabled = false;
-          generateBtn.textContent = 'Generate';
-
-          if(err){
-            console.error(err);
-            alert('Failed to generate QR code. Check the console for details.');
-            return;
-          }
-
-          try{
-            const img = canvas.toDataURL('image/png');
-            setDownload(img, filename);
-          }catch(e){
-            console.error(e);
-            alert('Unable to prepare download in this browser.');
-          }
-        });
-      });
-
-      // Optional: generate on Enter key when focus is in the link field
-      linkInput.addEventListener('keydown', function(e){
-        if(e.key === 'Enter'){
-          e.preventDefault();
-          generateBtn.click();
+          alert('Unable to prepare download in this browser.');
+          console.error('toDataURL error:', e);
         }
       });
-    })();
-  </script>
+    }catch(e){
+      // Synchronous exceptions (very rare)
+      clearTimeout(fallback);
+      resetButton();
+      alert('Unexpected error: ' + (e && e.message ? e.message : String(e)));
+      console.error('Unexpected error:', e);
+    }
+  });
+
+  // Optional: generate on Enter key when focus is in the link field
+  linkInput.addEventListener('keydown', function(e){
+    if(e.key === 'Enter'){
+      e.preventDefault();
+      generateBtn.click();
+    }
+  });
+})();
+</script>
 </body>
 </html>
