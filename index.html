@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>QR Generator</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.4/qrcode.min.js"></script>
   <style>
     :root{
       --accent:#2c7be5;
@@ -180,9 +181,10 @@
     </div>
   </div>
   <!-- Paste this <script> block into your page (replace your existing script) -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.4/qrcode.min.js"></script>
+
 <script>
 (function(){
+  const CDN = 'https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.4/qrcode.min.js';
   const linkInput = document.getElementById('link');
   const filenameInput = document.getElementById('filename');
   const canvas = document.getElementById('qr');
@@ -194,31 +196,54 @@
     downloadBtn.download = name;
     downloadBtn.style.display = 'inline-block';
   }
-
   function clearDownload(){
     downloadBtn.style.display = 'none';
     downloadBtn.removeAttribute('href');
     downloadBtn.removeAttribute('download');
   }
-
   function isValidUrl(value){
-    try{
-      const url = new URL(value);
-      return url.protocol === 'http:' || url.protocol === 'https:';
-    }catch(e){
-      return false;
-    }
+    try{ const url = new URL(value); return url.protocol === 'http:' || url.protocol === 'https:'; }
+    catch(e){ return false; }
   }
-
   function resetButton(){
     generateBtn.disabled = false;
     generateBtn.textContent = 'Generate';
   }
 
-  generateBtn.addEventListener('click', function(){
+  function ensureQRCodeLib(timeout = 8000){
+    return new Promise((resolve, reject) => {
+      if(window.QRCode) return resolve();
+      // create script tag to load library
+      const s = document.createElement('script');
+      s.src = CDN;
+      s.async = true;
+      let done = false;
+      const timer = setTimeout(() => {
+        if(done) return;
+        done = true;
+        reject(new Error('Loading QR library timed out'));
+      }, timeout);
+
+      s.onload = () => {
+        if(done) return;
+        done = true;
+        clearTimeout(timer);
+        if(window.QRCode) resolve();
+        else reject(new Error('QR library loaded but QRCode not available'));
+      };
+      s.onerror = () => {
+        if(done) return;
+        done = true;
+        clearTimeout(timer);
+        reject(new Error('Failed to load QR library from CDN'));
+      };
+      document.head.appendChild(s);
+    });
+  }
+
+  generateBtn.addEventListener('click', async function(){
     const link = linkInput.value.trim();
     const filename = (filenameInput.value.trim() || 'qr-code') + '.png';
-
     clearDownload();
 
     if(!link){
@@ -226,7 +251,6 @@
       linkInput.focus();
       return;
     }
-
     if(!isValidUrl(link)){
       alert('Please enter a valid URL starting with http:// or https://');
       linkInput.focus();
@@ -236,9 +260,18 @@
     generateBtn.disabled = true;
     generateBtn.textContent = 'Generating...';
 
-    // Fallback timeout: if the library never calls back, reset the UI after 8s
+    // ensure library is available
+    try{
+      await ensureQRCodeLib();
+    }catch(err){
+      resetButton();
+      alert('QR library error: ' + (err && err.message ? err.message : String(err)));
+      console.error(err);
+      return;
+    }
+
+    // fallback timeout in case callback never fires
     const fallback = setTimeout(function(){
-      // Only reset if still disabled (meaning callback didn't run)
       if(generateBtn.disabled){
         resetButton();
         alert('QR generation timed out. Please try again.');
@@ -247,12 +280,10 @@
 
     try{
       QRCode.toCanvas(canvas, link, { width: 300, margin: 1 }, function(err){
-        // clear fallback timer immediately
         clearTimeout(fallback);
         resetButton();
 
         if(err){
-          // Show the error to the user
           const msg = (err && err.message) ? err.message : String(err);
           alert('Failed to generate QR code: ' + msg);
           console.error('QRCode error:', err);
@@ -268,20 +299,16 @@
         }
       });
     }catch(e){
-      // Synchronous exceptions (very rare)
       clearTimeout(fallback);
       resetButton();
       alert('Unexpected error: ' + (e && e.message ? e.message : String(e)));
-      console.error('Unexpected error:', e);
+      console.error(e);
     }
   });
 
-  // Optional: generate on Enter key when focus is in the link field
+  // Enter key triggers generation
   linkInput.addEventListener('keydown', function(e){
-    if(e.key === 'Enter'){
-      e.preventDefault();
-      generateBtn.click();
-    }
+    if(e.key === 'Enter'){ e.preventDefault(); generateBtn.click(); }
   });
 })();
 </script>
