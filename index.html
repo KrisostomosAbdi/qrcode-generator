@@ -133,37 +133,60 @@
   }
 
   generateBtn.addEventListener('click', function(){
-    const link = linkInput.value.trim();
-    const filename = sanitizeFilename((filenameInput.value.trim() || 'qr-code')) + '.png';
-    hideDownload();
+    /* Replace only the generateBtn.addEventListener('click', ...) block in your page with this updated version.
+   Everything else in your script can remain the same. */
+generateBtn.addEventListener('click', function(){
+  let raw = linkInput.value.trim();
+  const filename = sanitizeFilename((filenameInput.value.trim() || 'qr-code')) + '.png';
+  hideDownload();
 
-    if(!link){
-      alert('Please enter a link to generate a QR code.');
-      linkInput.focus();
-      return;
+  if(!raw){
+    alert('Please enter a link to generate a QR code.');
+    linkInput.focus();
+    return;
+  }
+
+  // If user omitted protocol, prepend https://
+  if(!/^[a-zA-Z][a-zA-Z0-9+\-.]*:\/\//.test(raw)){
+    raw = 'https://' + raw;
+  }
+
+  // basic URL validation using the normalized value
+  try{
+    const u = new URL(raw);
+    if(u.protocol !== 'http:' && u.protocol !== 'https:'){
+      throw new Error('Invalid protocol');
     }
+  }catch(e){
+    alert('Please enter a valid URL starting with http:// or https://');
+    linkInput.focus();
+    return;
+  }
 
-    // basic URL validation
-    try{
-      const u = new URL(link);
-      if(u.protocol !== 'http:' && u.protocol !== 'https:'){
-        throw new Error('Invalid protocol');
+  // clear previous
+  qrContainer.innerHTML = '';
+
+  // create QR (qrcodejs) using the normalized URL
+  const qr = new QRCode(qrContainer, {
+    text: raw,
+    width: 300,
+    height: 300,
+    correctLevel: QRCode.CorrectLevel.H
+  });
+
+  // Wait for the library to render; then prepare download.
+  const start = Date.now();
+  const poll = setInterval(()=>{
+    if(prepareDownloadFromRendered()){
+      clearInterval(poll);
+    } else if(Date.now() - start > 1000){
+      clearInterval(poll);
+      if(!prepareDownloadFromRendered()){
+        console.warn('QR rendered but could not prepare download automatically.');
       }
-    }catch(e){
-      alert('Please enter a valid URL starting with http:// or https://');
-      linkInput.focus();
-      return;
     }
-
-    // clear previous
-    qrContainer.innerHTML = '';
-
-    // create QR (qrcodejs)
-    const qr = new QRCode(qrContainer, {
-      text: link,
-      width: 300,
-      height: 300,
-      correctLevel: QRCode.CorrectLevel.H
+  }, 80);
+});
     });
 
     // Wait for the library to render; then prepare download.
