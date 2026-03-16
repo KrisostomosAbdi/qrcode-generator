@@ -1057,35 +1057,23 @@
     // narrow screens while still reflecting the correct proportions.
 
     function updateContainerSize() {
+  const w = parseInt(widthInput.value);
+  const h = parseInt(heightInput.value);
 
-      const w = parseInt(widthInput.value);
+  const maxW = Math.min(w, qrContainer.parentElement.offsetWidth - 32 || 600);
+  const scale = maxW < w ? maxW / w : 1;
 
-      const h = parseInt(heightInput.value);
+  const displayW = Math.round(w * scale);
+  const displayH = Math.round(h * scale);
 
-      // Cap at the right panel's available width (minus padding)
+  qrContainer.style.width  = displayW + 'px';
+  qrContainer.style.height = displayH + 'px';
 
-      const maxW = Math.min(w, qrContainer.parentElement.offsetWidth - 32 || 600);
+  qrContainer.style.setProperty('--qr-aspect', w + ' / ' + h);
+  qrContainer.style.aspectRatio = w + ' / ' + h;
 
-      const scale = maxW < w ? maxW / w : 1;
-
-      const displayW = Math.round(w * scale);
-
-      const displayH = Math.round(h * scale);
-
-      qrContainer.style.width  = displayW + 'px';
-
-      qrContainer.style.height = displayH + 'px';
-
-      qrContainer.style.maxWidth = '100%';
-
-      // Update aspect-ratio CSS variable for responsive scaling
-
-      qrContainer.style.setProperty('--qr-aspect', w + ' / ' + h);
-
-      qrContainer.style.aspectRatio = w + ' / ' + h;
-
-    }
-
+  return {displayW, displayH};
+}
 
 
     window.addEventListener('load',   () => { adjustQRSize(); updateContainerSize(); });
@@ -1472,7 +1460,8 @@
 
       // ── FIX: Update container to match chosen dimensions ──────────────
 
-      updateContainerSize();
+      const {displayW, displayH} = updateContainerSize();
+
 
 
 
