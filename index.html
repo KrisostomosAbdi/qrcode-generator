@@ -1,201 +1,1779 @@
-<!doctype html>
+<!DOCTYPE html>
+
 <html lang="en">
+
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>QR Generator</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<style>
-  :root{ --accent:#2c7be5; --bg:#f7f9fc; --card:#fff; --muted:#6b7280; --radius:10px; --gap:12px; font-family:Inter,Arial,Helvetica,sans-serif; }
-  html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg),#eef4fb);color:#0f172a;}
-  .wrap{min-height:100%;display:flex;align-items:center;justify-content:center;padding:32px 16px;box-sizing:border-box;}
-  .card{width:100%;max-width:420px;background:var(--card);border-radius:var(--radius);box-shadow:0 8px 30px rgba(15,23,42,0.08);padding:22px;text-align:center;}
-  h1{margin:0 0 12px 0;font-size:20px;}
-  p.lead{margin:0 0 18px 0;color:var(--muted);font-size:13px;}
-  form{display:grid;gap:var(--gap);margin-bottom:14px;}
-  label{display:block;text-align:left;font-size:13px;color:var(--muted);margin-bottom:6px;}
-  input[type="url"],input[type="text"]{width:100%;padding:12px 14px;border:1px solid #e6eef8;border-radius:8px;font-size:14px;outline:none;}
-  input:focus{border-color:var(--accent);box-shadow:0 4px 18px rgba(44,123,229,0.12);}
-  .controls{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;}
-  button.generate{background:var(--accent);color:#fff;border:none;padding:10px 16px;border-radius:8px;cursor:pointer;font-weight:600;flex:1 1 auto;min-width:140px;}
-  a.download{display:none;text-decoration:none;background:#0b1220;color:#fff;padding:10px 14px;border-radius:8px;font-weight:600;margin-top:12px;opacity:0;transition:opacity .25s ease;}
-  a.download.show{display:inline-block;opacity:1;}
-  .preview{margin-top:16px;display:flex;align-items:center;justify-content:center;gap:12px;flex-direction:column;}
-  #qrcode{background:#fff;border-radius:8px;box-shadow:0 6px 18px rgba(15,23,42,0.06);width:100%;max-width:300px;padding:12px;box-sizing:border-box;}
-  .note{font-size:12px;color:var(--muted);margin-top:8px;}
-  @media (max-width:420px){ .card{padding:18px;} h1{font-size:18px;} }
-</style>
+
+  <meta charset="utf-8" />
+
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+  <title>QR Generator</title>
+
+  <script src="https://unpkg.com/qr-code-styling@1.5.0/lib/qr-code-styling.js"></script>
+
+  <style>
+
+    :root {
+
+      --accent: #2c7be5;
+
+      --accent-light: #e0ebff;
+
+      --bg: #f7f9fc;
+
+      --card: #fff;
+
+      --muted: #6b7280;
+
+      --radius: 10px;
+
+      --gap: 12px;
+
+      --success: #10b981;
+
+      --warning: #f59e0b;
+
+      --danger: #ef4444;
+
+      font-family: Inter, Arial, Helvetica, sans-serif;
+
+    }
+
+
+
+    html, body {
+
+      height: 100%;
+
+      margin: 0;
+
+      background: linear-gradient(180deg, var(--bg), #eef4fb);
+
+      color: #0f172a;
+
+    }
+
+
+
+    .wrap {
+
+      min-height: 100%;
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: center;
+
+      padding: 32px 16px;
+
+      box-sizing: border-box;
+
+    }
+
+
+
+    .container {
+
+      width: 100%;
+
+      max-width: 1200px;
+
+      display: grid;
+
+      grid-template-columns: 420px 1fr;
+
+      gap: 24px;
+
+      align-items: stretch;
+
+    }
+
+
+
+    .card {
+
+      background: var(--card);
+
+      border-radius: var(--radius);
+
+      box-shadow: 0 8px 30px rgba(15, 23, 42, 0.08);
+
+      padding: 24px;
+
+    }
+
+
+
+    .card-left { overflow-y: auto; }
+
+
+
+    h1 { margin: 0 0 8px 0; font-size: 22px; font-weight: 700; }
+
+    h2 { margin: 0 0 16px 0; font-size: 16px; font-weight: 600; color: #0f172a; }
+
+
+
+    form { display: grid; gap: var(--gap); }
+
+    .form-group { display: grid; gap: var(--gap); }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap); }
+
+
+
+    label {
+
+      display: block; text-align: left; font-size: 13px;
+
+      color: var(--muted); margin-bottom: 6px; font-weight: 500;
+
+    }
+
+
+
+    input[type="url"],
+
+    input[type="text"],
+
+    input[type="color"],
+
+    input[type="number"],
+
+    input[type="range"],
+
+    select {
+
+      width: 100%; padding: 12px 14px; border: 1px solid #e6eef8;
+
+      border-radius: 8px; font-size: 14px; outline: none; box-sizing: border-box;
+
+    }
+
+
+
+    input[type="range"] { padding: 0; height: 6px; cursor: pointer; }
+
+    input:focus, select:focus { border-color: var(--accent); box-shadow: 0 4px 18px rgba(44,123,229,0.12); }
+
+
+
+    .image-upload-wrapper { position: relative; width: 100%; }
+
+    .image-upload-label {
+
+      display: flex; align-items: center; justify-content: center;
+
+      gap: 8px; padding: 12px 14px; border: 2px dashed #e6eef8;
+
+      border-radius: 8px; cursor: pointer; background: #fafbfc; transition: all 0.2s;
+
+    }
+
+    .image-upload-label:hover { border-color: var(--accent); background: #f0f6ff; }
+
+    .image-upload-label input { display: none; }
+
+    .image-upload-label span { font-size: 13px; color: var(--muted); }
+
+    .image-preview {
+
+      width: 60px; height: 60px; border-radius: 6px; background: #e6eef8;
+
+      display: none; align-items: center; justify-content: center;
+
+      overflow: hidden; margin-top: 8px;
+
+    }
+
+    .image-preview img { width: 100%; height: 100%; object-fit: cover; }
+
+    .image-remove {
+
+      display: none; margin-top: 8px; color: var(--accent);
+
+      cursor: pointer; font-size: 12px; text-decoration: underline;
+
+    }
+
+
+
+    .controls {
+
+      display: flex; gap: 10px; align-items: center;
+
+      justify-content: space-between; flex-wrap: wrap;
+
+    }
+
+
+
+    button.generate {
+
+      background: var(--accent); color: #fff; border: none;
+
+      padding: 10px 16px; border-radius: 8px; cursor: pointer;
+
+      font-weight: 600; flex: 1 1 auto; min-width: 140px; transition: background 0.2s;
+
+    }
+
+    button.generate:hover { background: #1f5cb8; }
+
+    button.generate:active { transform: scale(0.98); }
+
+    button.generate:disabled { background: #ccc; cursor: not-allowed; }
+
+
+
+    .download-btn {
+
+      display: none; text-decoration: none; background: #0b1220;
+
+      color: #fff; padding: 10px 14px; border-radius: 8px; border: none;
+
+      font-weight: 600; margin-top: 12px; opacity: 0;
+
+      transition: opacity 0.25s ease; cursor: pointer;
+
+    }
+
+    .download-btn.show { display: inline-block; opacity: 1; }
+
+
+
+    .preview {
+
+      display: flex; align-items: center;
+
+      justify-content: center; gap: 12px; flex-direction: column;
+
+    }
+
+
+
+    /* 
+      FIX: Remove hardcoded max-width. Width/height are now set dynamically via JS
+      to reflect the exact slider values. We cap at the available container width
+      using max-width: 100% so it never overflows on small screens.
+    */
+
+    #qrcode {
+
+      background: #fff;
+
+      border-radius: 8px;
+
+      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+
+      padding: 0;
+
+      box-sizing: border-box;
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: center;
+
+      overflow: hidden;
+
+      /* Size is set dynamically by JS — these are just safe fallbacks */
+
+      width: 300px;
+
+      height: 300px;
+
+      max-width: 100%;
+
+      /* Maintain aspect ratio when capped by max-width */
+
+      aspect-ratio: var(--qr-aspect, 1);
+
+    }
+
+
+
+    /* Canvas/SVG: always fill the box exactly */
+
+    #qrcode canvas,
+
+    #qrcode svg {
+
+      display: block;
+
+      width: 100% !important;
+
+      height: 100% !important;
+
+    }
+
+
+
+    .note { font-size: 12px; color: var(--muted); margin-top: 8px; text-align: center; }
+
+
+
+    /* Scanability Score */
+
+    .scan-score-panel {
+
+      width: 100%; max-width: 400px; background: #f7f9fc;
+
+      border: 1px solid #e6eef8; border-radius: 10px;
+
+      padding: 14px 16px; box-sizing: border-box;
+
+    }
+
+    .scan-score-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+
+    .scan-score-title { font-size: 12px; font-weight: 700; color: #0f172a; text-transform: uppercase; letter-spacing: 0.05em; }
+
+    .scan-badge { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 20px; transition: all 0.3s; }
+
+    .scan-badge.excellent { background: #d1fae5; color: #065f46; }
+
+    .scan-badge.good      { background: #e0ebff; color: #1e3a8a; }
+
+    .scan-badge.fair      { background: #fef3c7; color: #78350f; }
+
+    .scan-badge.poor      { background: #fee2e2; color: #7f1d1d; }
+
+    .scan-score-bar-wrap { height: 8px; background: #e6eef8; border-radius: 4px; overflow: hidden; margin-bottom: 10px; }
+
+    .scan-score-bar { height: 100%; border-radius: 4px; transition: width 0.5s ease, background 0.5s ease; }
+
+    .scan-factors { display: grid; gap: 6px; }
+
+    .scan-factor { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+
+    .scan-factor-icon { font-size: 14px; width: 18px; text-align: center; flex-shrink: 0; }
+
+    .scan-factor-label { flex: 1; color: #374151; }
+
+    .scan-factor-score { font-weight: 700; font-size: 12px; min-width: 28px; text-align: right; }
+
+    .scan-factor-score.pass { color: var(--success); }
+
+    .scan-factor-score.warn { color: var(--warning); }
+
+    .scan-factor-score.fail { color: var(--danger); }
+
+    .scan-tip { margin-top: 10px; font-size: 11px; color: var(--muted); background: #fff; border-left: 3px solid var(--accent); padding: 6px 10px; border-radius: 0 6px 6px 0; line-height: 1.5; }
+
+    .scan-tip:empty { display: none; }
+
+    .scan-score-num { font-size: 28px; font-weight: 800; line-height: 1; transition: color 0.3s; }
+
+    .scan-score-num.excellent { color: #10b981; }
+
+    .scan-score-num.good      { color: #2c7be5; }
+
+    .scan-score-num.fair      { color: #f59e0b; }
+
+    .scan-score-num.poor      { color: #ef4444; }
+
+
+
+    .settings { background: #f7f9fc; padding: 16px; border-radius: 8px; margin-bottom: 12px; }
+
+    .settings-title { font-size: 13px; font-weight: 600; color: #0f172a; margin-bottom: 12px; text-align: left; display: flex; align-items: center; gap: 6px; }
+
+    .settings-title::before { content: ''; width: 3px; height: 16px; background: var(--accent); border-radius: 2px; }
+
+
+
+    .color-picker-group { display: flex; align-items: flex-end; gap: 8px; }
+
+    .color-picker-group input[type="color"] { width: 50px; height: 50px; padding: 3px; cursor: pointer; }
+
+
+
+    .slider-group { display: flex; align-items: center; gap: 8px; }
+
+    .slider-group input[type="range"] { flex: 1; }
+
+    .slider-value { min-width: 35px; text-align: right; font-size: 12px; font-weight: 600; color: var(--accent); }
+
+
+
+    .toggle-group { display: flex; gap: 8px; align-items: center; }
+
+    .toggle-switch { position: relative; width: 40px; height: 24px; background: #e6eef8; border-radius: 12px; cursor: pointer; transition: background 0.3s; }
+
+    .toggle-switch.active { background: var(--success); }
+
+    .toggle-switch::after { content: ''; position: absolute; width: 20px; height: 20px; background: white; border-radius: 50%; top: 2px; left: 2px; transition: left 0.3s; }
+
+    .toggle-switch.active::after { left: 18px; }
+
+
+
+    .expandable-section { border: 1px solid #e6eef8; border-radius: 8px; margin-bottom: 12px; background: #fafbfc; }
+
+    .expandable-header { padding: 12px 16px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: 600; font-size: 13px; user-select: none; transition: background 0.2s; }
+
+    .expandable-header:hover { background: #f0f4f8; }
+
+    .expandable-header.open { background: var(--accent-light); border-radius: 8px 8px 0 0; }
+
+    .expandable-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
+
+    .expandable-content.open { max-height: 1000px; }
+
+    .expandable-inner { padding: 12px 16px; display: grid; gap: var(--gap); }
+
+    .expand-icon { transition: transform 0.3s; }
+
+    .expandable-header.open .expand-icon { transform: rotate(180deg); }
+
+
+
+    .preset-btn { padding: 8px 10px; border: 1px solid #e6eef8; border-radius: 6px; background: #fff; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.2s; text-align: center; }
+
+    .preset-btn:hover { border-color: var(--accent); background: var(--accent-light); }
+
+    .preset-btn.active { border-color: var(--accent); background: var(--accent-light); color: var(--accent); font-weight: 700; }
+
+
+
+    @media (max-width: 1024px) {
+
+      .container { grid-template-columns: 1fr; }
+
+      .card-left { order: 2; }
+
+      .card-right { order: 1; }
+
+    }
+
+    @media (max-width: 600px) {
+
+      .container { gap: 16px; }
+
+      .card { padding: 16px; }
+
+      .controls { flex-direction: column; }
+
+      button.generate { width: 100%; }
+
+      .form-row { grid-template-columns: 1fr; }
+
+      .color-picker-group { flex-direction: column; align-items: flex-start; }
+
+      .color-picker-group input[type="color"] { width: 100%; }
+
+    }
+
+  </style>
+
 </head>
+
+
+
 <body>
-  <div class="wrap">
-    <div class="card" role="region" aria-labelledby="title">
-      <h1 id="title">QR Generator</h1>
-      <p class="lead">Enter a link and download the generated QR code as PNG.</p>
+
+<div class="wrap">
+
+  <div class="container">
+
+
+
+    <!-- LEFT PANEL -->
+
+    <div class="card card-left">
+
+      <h1>QR Generator</h1>
+
+
 
       <form id="qrForm" onsubmit="return false;" novalidate>
-        <div>
-          <label for="link">Link</label>
-          <input id="link" type="url" inputmode="url" placeholder="https://example.com" required aria-required="true" />
+
+
+
+        <div class="form-group">
+
+          <label for="link">📎 Link</label>
+
+          <input id="link" type="url" inputmode="url" placeholder="https://example.com" required />
+
         </div>
 
-        <div>
-          <label for="filename">Filename</label>
-          <input id="filename" type="text" placeholder="qr-code" />
+
+
+        <div class="settings">
+
+          <div class="settings-title">Preset Themes</div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+
+            <button type="button" class="preset-btn" data-preset="classic">✓ Classic</button>
+
+            <button type="button" class="preset-btn" data-preset="dark">Dark Mode</button>
+
+            <button type="button" class="preset-btn" data-preset="blue">Blue Bold</button>
+
+            <button type="button" class="preset-btn" data-preset="rainbow">🌈 Rainbow</button>
+
+          </div>
+
         </div>
+
+
+
+        <div class="settings">
+
+          <div class="settings-title">Basic Settings</div>
+
+          <div>
+
+            <label for="errorCorrection">Error Correction</label>
+
+            <div style="font-size:11px;color:var(--muted);margin-bottom:8px;line-height:1.3;">Higher levels allow the QR to remain scannable even if partially covered by a logo.</div>
+
+            <select id="errorCorrection">
+
+              <option value="L">Low (7%)</option>
+
+              <option value="M">Medium (15%)</option>
+
+              <option value="Q" selected>Quartile (25%)</option>
+
+              <option value="H">High (30%)</option>
+
+            </select>
+
+          </div>
+
+          <div>
+
+            <label for="width">Width (px)</label>
+
+            <div class="slider-group">
+
+              <input id="width" type="range" min="100" max="500" value="300" step="10" />
+
+              <span class="slider-value" id="widthValue">300</span>
+
+            </div>
+
+          </div>
+
+          <div>
+
+            <label for="height">Height (px)</label>
+
+            <div class="slider-group">
+
+              <input id="height" type="range" min="100" max="500" value="300" step="10" />
+
+              <span class="slider-value" id="heightValue">300</span>
+
+            </div>
+
+          </div>
+
+          <div>
+
+            <label for="margin">Margin (px)</label>
+
+            <div class="slider-group">
+
+              <input id="margin" type="range" min="0" max="50" value="10" step="5" />
+
+              <span class="slider-value" id="marginValue">10</span>
+
+            </div>
+
+          </div>
+
+          <div>
+
+            <label for="format">Export Format</label>
+
+            <select id="format">
+
+              <option value="png">PNG</option>
+
+              <option value="svg">SVG</option>
+
+              <option value="jpeg">JPEG</option>
+
+              <option value="webp">WEBP</option>
+
+            </select>
+
+          </div>
+
+        </div>
+
+
+
+        <div class="expandable-section">
+
+          <div class="expandable-header" onclick="toggleSection(this)">
+
+            <span>🎨 Background Settings</span><span class="expand-icon">▼</span>
+
+          </div>
+
+          <div class="expandable-content">
+
+            <div class="expandable-inner">
+
+              <div>
+
+                <label for="bgColor">Background Color</label>
+
+                <input id="bgColor" type="color" value="#ffffff" />
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+
+        <div class="expandable-section">
+
+          <div class="expandable-header" onclick="toggleSection(this)">
+
+            <span>⚫ Dots Settings</span><span class="expand-icon">▼</span>
+
+          </div>
+
+          <div class="expandable-content">
+
+            <div class="expandable-inner">
+
+              <div class="color-picker-group">
+
+                <div style="flex:1">
+
+                  <label for="dotsColor">Color</label>
+
+                  <input id="dotsColor" type="color" value="#000000" />
+
+                </div>
+
+                <div style="flex:1">
+
+                  <label for="dotsType">Style</label>
+
+                  <select id="dotsType">
+
+                    <option value="square">Square</option>
+
+                    <option value="rounded">Rounded</option>
+
+                    <option value="extra-rounded">Extra Rounded</option>
+
+                    <option value="classy">Classy</option>
+
+                    <option value="classy-rounded">Classy Rounded</option>
+
+                  </select>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+
+        <div class="expandable-section">
+
+          <div class="expandable-header" onclick="toggleSection(this)">
+
+            <span>🟪 Corner Squares</span><span class="expand-icon">▼</span>
+
+          </div>
+
+          <div class="expandable-content">
+
+            <div class="expandable-inner">
+
+              <div class="color-picker-group">
+
+                <div style="flex:1">
+
+                  <label for="cornersSquareColor">Color</label>
+
+                  <input id="cornersSquareColor" type="color" value="#000000" />
+
+                </div>
+
+                <div style="flex:1">
+
+                  <label for="cornersSquareType">Type</label>
+
+                  <select id="cornersSquareType">
+
+                    <option value="square">Square</option>
+
+                    <option value="extra-rounded">Rounded</option>
+
+                  </select>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+
+        <div class="expandable-section">
+
+          <div class="expandable-header" onclick="toggleSection(this)">
+
+            <span>⚪ Corner Dots</span><span class="expand-icon">▼</span>
+
+          </div>
+
+          <div class="expandable-content">
+
+            <div class="expandable-inner">
+
+              <div class="color-picker-group">
+
+                <div style="flex:1">
+
+                  <label for="cornersDotColor">Color</label>
+
+                  <input id="cornersDotColor" type="color" value="#000000" />
+
+                </div>
+
+                <div style="flex:1">
+
+                  <label for="cornersDotType">Type</label>
+
+                  <select id="cornersDotType">
+
+                    <option value="square">Square</option>
+
+                    <option value="dot">Dot</option>
+
+                  </select>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+
+        <div class="expandable-section">
+
+          <div class="expandable-header" onclick="toggleSection(this)">
+
+            <span>📷 Logo/Image</span><span class="expand-icon">▼</span>
+
+          </div>
+
+          <div class="expandable-content">
+
+            <div class="expandable-inner">
+
+              <div class="image-upload-wrapper">
+
+                <label class="image-upload-label">
+
+                  <input id="imageInput" type="file" accept="image/*" />
+
+                  <span>Click to upload image or logo</span>
+
+                </label>
+
+                <div id="imagePreview" class="image-preview"></div>
+
+                <span id="imageRemove" class="image-remove">Remove image</span>
+
+              </div>
+
+              <div class="form-row">
+
+                <div>
+
+                  <label for="imageMargin">Margin (px)</label>
+
+                  <input id="imageMargin" type="number" min="0" max="50" value="5" />
+
+                </div>
+
+                <div>
+
+                  <label for="imageSizeRatio">Size (%)</label>
+
+                  <input id="imageSizeRatio" type="number" min="10" max="30" value="20" />
+
+                </div>
+
+              </div>
+
+              <div class="toggle-group">
+
+                <label style="margin-bottom:0">Hide Background Dots</label>
+
+                <div class="toggle-switch active" id="hideBackgroundDotsToggle"></div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+
+        <div class="expandable-section">
+
+          <div class="expandable-header" onclick="toggleSection(this)">
+
+            <span>⚙️ Advanced Settings</span><span class="expand-icon">▼</span>
+
+          </div>
+
+          <div class="expandable-content">
+
+            <div class="expandable-inner">
+
+              <div>
+
+                <label for="qrType">QR Render Type</label>
+
+                <select id="qrType">
+
+                  <option value="svg" selected>SVG (Best for vector)</option>
+
+                  <option value="canvas">Canvas (Best for PNG/JPEG)</option>
+
+                </select>
+
+              </div>
+
+              <div>
+
+                <label for="filename">Filename</label>
+
+                <input id="filename" type="text" placeholder="my-qr-code" />
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
 
         <div class="controls">
-          <button id="generateBtn" class="generate" type="button">Generate</button>
+
+          <button id="generateBtn" class="generate" type="button">🎨 Generate QR Code</button>
+
           <button id="clearBtn" class="generate" type="button" style="background:#e6eef8;color:#0f172a;min-width:90px;">Clear</button>
+
         </div>
+
+
+
       </form>
 
-      <div class="preview" aria-live="polite">
-        <div id="qrcode" aria-hidden="false"></div>
-        <a id="downloadBtn" class="download" download>Download QR</a>
-        <div class="note">Tip: Use a short URL for better scanning reliability.</div>
-      </div>
     </div>
+
+
+
+    <!-- RIGHT PANEL -->
+
+    <div class="card card-right">
+
+      <h2>Live Preview</h2>
+
+      <div class="preview" aria-live="polite">
+
+        <div id="qrcode"></div>
+
+        <button id="downloadBtn" class="download-btn" type="button">⬇️ Download QR Code</button>
+
+
+
+        <div class="scan-score-panel" id="scanPanel" style="display:none;">
+
+          <div class="scan-score-header">
+
+            <span class="scan-score-title">Scanability Score</span>
+
+            <span class="scan-badge" id="scanBadge">—</span>
+
+          </div>
+
+          <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:8px;">
+
+            <span class="scan-score-num" id="scanScoreNum">—</span>
+
+            <span style="font-size:13px;color:#6b7280;">/ 100</span>
+
+          </div>
+
+          <div class="scan-score-bar-wrap">
+
+            <div class="scan-score-bar" id="scanBar" style="width:0%"></div>
+
+          </div>
+
+          <div class="scan-factors" id="scanFactors"></div>
+
+          <div class="scan-tip" id="scanTip"></div>
+
+        </div>
+
+
+
+        <div class="note">✨ Features: Colors • Styles • Logo • Export Formats • Error Correction</div>
+
+      </div>
+
+    </div>
+
+
+
   </div>
 
+</div>
+
+
+
 <script>
-(function(){
-  const linkInput = document.getElementById('link');
-  const filenameInput = document.getElementById('filename');
-  const qrContainer = document.getElementById('qrcode');
-  const generateBtn = document.getElementById('generateBtn');
-  const clearBtn = document.getElementById('clearBtn');
-  const downloadBtn = document.getElementById('downloadBtn');
 
-  let currentObjectUrl = null;
+  function toggleSection(header) {
 
-  function sanitizeFilename(name){
-    return name.replace(/[^a-z0-9_\-\.]/gi, '_').replace(/_+/g,'_') || 'qr-code';
+    header.classList.toggle('open');
+
+    header.nextElementSibling.classList.toggle('open');
+
   }
 
-  function hideDownload(){
-    downloadBtn.classList.remove('show');
-    downloadBtn.removeAttribute('href');
-    downloadBtn.removeAttribute('download');
-    downloadBtn.style.display = 'none';
-  }
 
-  function showDownload(href, filename){
-    downloadBtn.href = href;
-    downloadBtn.download = filename;
-    downloadBtn.style.display = 'inline-block';
-    // small timeout to ensure display change is applied before opacity transition
-    requestAnimationFrame(()=> downloadBtn.classList.add('show'));
-  }
 
-  function revokeCurrentUrl(){
-    if(currentObjectUrl){
-      URL.revokeObjectURL(currentObjectUrl);
-      currentObjectUrl = null;
+  (function () {
+
+    // ── Element refs ─────────────────────────────────────────────────────
+
+    const linkInput               = document.getElementById('link');
+
+    const imageInput              = document.getElementById('imageInput');
+
+    const imagePreview            = document.getElementById('imagePreview');
+
+    const imageRemove             = document.getElementById('imageRemove');
+
+    const dotsColorInput          = document.getElementById('dotsColor');
+
+    const dotsTypeSelect          = document.getElementById('dotsType');
+
+    const cornersSquareColorInput = document.getElementById('cornersSquareColor');
+
+    const cornersSquareTypeSelect = document.getElementById('cornersSquareType');
+
+    const cornersDotColorInput    = document.getElementById('cornersDotColor');
+
+    const cornersDotTypeSelect    = document.getElementById('cornersDotType');
+
+    const bgColorInput            = document.getElementById('bgColor');
+
+    const imageMarginInput        = document.getElementById('imageMargin');
+
+    const imageSizeRatioInput     = document.getElementById('imageSizeRatio');
+
+    const hideBackgroundDotsToggle= document.getElementById('hideBackgroundDotsToggle');
+
+    const formatSelect            = document.getElementById('format');
+
+    const filenameInput           = document.getElementById('filename');
+
+    const errorCorrectionSelect   = document.getElementById('errorCorrection');
+
+    const widthInput              = document.getElementById('width');
+
+    const heightInput             = document.getElementById('height');
+
+    const marginInput             = document.getElementById('margin');
+
+    const qrTypeSelect            = document.getElementById('qrType');
+
+    const qrContainer             = document.getElementById('qrcode');
+
+    const generateBtn             = document.getElementById('generateBtn');
+
+    const clearBtn                = document.getElementById('clearBtn');
+
+    const downloadBtn             = document.getElementById('downloadBtn');
+
+    const presetButtons           = document.querySelectorAll('.preset-btn');
+
+
+
+    let currentQRCode    = null;
+
+    let currentImageData = null;
+
+    let hideBackgroundDots = true;
+
+
+
+    const DPR = Math.min(window.devicePixelRatio || 1, 3);
+
+
+
+    // ── FIX: Update #qrcode container size to match slider values ─────────
+
+    // The preview box is sized to the chosen W×H (capped at available space).
+
+    // We also set the CSS aspect-ratio so it scales down proportionally on
+
+    // narrow screens while still reflecting the correct proportions.
+
+    function updateContainerSize() {
+
+      const w = parseInt(widthInput.value);
+
+      const h = parseInt(heightInput.value);
+
+      // Cap at the right panel's available width (minus padding)
+
+      const maxW = Math.min(w, qrContainer.parentElement.offsetWidth - 32 || 600);
+
+      const scale = maxW < w ? maxW / w : 1;
+
+      const displayW = Math.round(w * scale);
+
+      const displayH = Math.round(h * scale);
+
+      qrContainer.style.width  = displayW + 'px';
+
+      qrContainer.style.height = displayH + 'px';
+
+      qrContainer.style.maxWidth = '100%';
+
+      // Update aspect-ratio CSS variable for responsive scaling
+
+      qrContainer.style.setProperty('--qr-aspect', w + ' / ' + h);
+
+      qrContainer.style.aspectRatio = w + ' / ' + h;
+
     }
-  }
 
-  function prepareDownloadFromRendered(){
-    const canvas = qrContainer.querySelector('canvas');
-    const img = qrContainer.querySelector('img');
 
-    try{
-      if(canvas && canvas.toDataURL){
-        const data = canvas.toDataURL('image/png');
-        showDownload(data, sanitizeFilename((filenameInput.value.trim() || 'qr-code')) + '.png');
-        return true;
-      } else if(img && img.src){
-        if(img.src.startsWith('data:')){
-          showDownload(img.src, sanitizeFilename((filenameInput.value.trim() || 'qr-code')) + '.png');
-          return true;
-        } else {
-          // fetch remote image and create object URL
-          fetch(img.src).then(r=>r.blob()).then(blob=>{
-            revokeCurrentUrl();
-            currentObjectUrl = URL.createObjectURL(blob);
-            showDownload(currentObjectUrl, sanitizeFilename((filenameInput.value.trim() || 'qr-code')) + '.png');
-          }).catch(err=>{
-            console.error('Could not prepare download from img:', err);
-          });
-          return true;
-        }
+
+    window.addEventListener('load',   () => { adjustQRSize(); updateContainerSize(); });
+
+    window.addEventListener('resize', () => { updateContainerSize(); });
+
+
+
+    // Adjust sliders for mobile
+
+    function adjustQRSize() {
+
+      if (window.innerWidth < 600) {
+
+        widthInput.value  = 220;
+
+        heightInput.value = 220;
+
+        document.getElementById('widthValue').textContent  = 220;
+
+        document.getElementById('heightValue').textContent = 220;
+
       }
-    }catch(e){
-      console.error('prepareDownload error', e);
-    }
-    return false;
-  }
 
-  function clearQr(){
-    revokeCurrentUrl();
-    qrContainer.innerHTML = '';
-    hideDownload();
-  }
-
-  generateBtn.addEventListener('click', function(){
-    let raw = linkInput.value.trim();
-    hideDownload();
-
-    if(!raw){
-      alert('Please enter a link to generate a QR code.');
-      linkInput.focus();
-      return;
     }
 
-    // If user omitted protocol, prepend https://
-    if(!/^[a-zA-Z][a-zA-Z0-9+\-.]*:\/\//.test(raw)){
-      raw = 'https://' + raw.replace(/^\/+/, '');
-      // reflect normalized URL back to input so user sees it
-      linkInput.value = raw;
+
+
+    // ── Scanability ───────────────────────────────────────────────────────
+
+    function hexToRgb(hex) {
+
+      return {
+
+        r: parseInt(hex.slice(1,3), 16),
+
+        g: parseInt(hex.slice(3,5), 16),
+
+        b: parseInt(hex.slice(5,7), 16),
+
+      };
+
     }
 
-    // basic URL validation using the normalized value
-    try{
-      const u = new URL(raw);
-      if(u.protocol !== 'http:' && u.protocol !== 'https:'){
-        throw new Error('Invalid protocol');
+    function relativeLuminance({r,g,b}) {
+
+      return [r,g,b].reduce((sum, v, i) => {
+
+        v /= 255;
+
+        v = v <= 0.03928 ? v/12.92 : Math.pow((v+0.055)/1.055, 2.4);
+
+        return sum + v * [0.2126,0.7152,0.0722][i];
+
+      }, 0);
+
+    }
+
+    function contrastRatio(h1, h2) {
+
+      const l1 = relativeLuminance(hexToRgb(h1));
+
+      const l2 = relativeLuminance(hexToRgb(h2));
+
+      return (Math.max(l1,l2)+0.05) / (Math.min(l1,l2)+0.05);
+
+    }
+
+
+
+    function computeScanabilityScore() {
+
+      const factors = [], tips = [];
+
+
+
+      const cr = contrastRatio(dotsColorInput.value, bgColorInput.value);
+
+      let cScore, cStatus, cLabel;
+
+      if      (cr>=7)   { cScore=35; cStatus='pass'; cLabel='Excellent'; }
+
+      else if (cr>=4.5) { cScore=28; cStatus='pass'; cLabel='Good'; }
+
+      else if (cr>=3)   { cScore=18; cStatus='warn'; cLabel='Fair';      tips.push('Increase contrast between dots and background for better scan reliability.'); }
+
+      else              { cScore=5;  cStatus='fail'; cLabel='Poor';      tips.push('Very low contrast — most scanners will struggle. Try dark dots on a light background.'); }
+
+      factors.push({icon:'🎨', label:'Dots vs. background contrast', score:cScore, max:35, status:cStatus, detail:`${cr.toFixed(1)}:1 — ${cLabel}`});
+
+
+
+      const ecMap={L:10,M:18,Q:23,H:25}, ecSt={L:'fail',M:'warn',Q:'pass',H:'pass'}, ecLb={L:'Low',M:'Medium',Q:'Quartile',H:'High'};
+
+      const ecVal = errorCorrectionSelect.value;
+
+      if (ecVal==='L') tips.push('Low error correction makes QR codes fragile. Use Q or H for print/logo use.');
+
+      factors.push({icon:'🛡️', label:'Error correction level', score:ecMap[ecVal], max:25, status:ecSt[ecVal], detail:ecLb[ecVal]});
+
+
+
+      const w=parseInt(widthInput.value), h=parseInt(heightInput.value), mn=Math.min(w,h);
+
+      let sScore,sSt,sDt;
+
+      if      (mn>=250) { sScore=20; sSt='pass'; sDt=`${w}×${h}px — Great`; }
+
+      else if (mn>=180) { sScore=15; sSt='pass'; sDt=`${w}×${h}px — Good`; }
+
+      else if (mn>=120) { sScore=10; sSt='warn'; sDt=`${w}×${h}px — Borderline`; tips.push('Increase size to at least 250px for reliable scanning.'); }
+
+      else              { sScore=4;  sSt='fail'; sDt=`${w}×${h}px — Too small`;  tips.push('QR code too small — increase to at least 200px.'); }
+
+      factors.push({icon:'📐', label:'Size', score:sScore, max:20, status:sSt, detail:sDt});
+
+
+
+      const margin=parseInt(marginInput.value);
+
+      let mScore,mSt,mDt;
+
+      if      (margin>=10) { mScore=10; mSt='pass'; mDt=`${margin}px — Good`; }
+
+      else if (margin>=5)  { mScore=7;  mSt='warn'; mDt=`${margin}px — Minimal`;      tips.push('Increase margin to ≥10px to ensure QR edges are detected.'); }
+
+      else                 { mScore=3;  mSt='fail'; mDt=`${margin}px — No quiet zone`; tips.push('A quiet zone is critical — set margin to at least 10px.'); }
+
+      factors.push({icon:'⬜', label:'Quiet zone (margin)', score:mScore, max:10, status:mSt, detail:mDt});
+
+
+
+      let lScore,lSt,lDt;
+
+      if (!currentImageData) {
+
+        lScore=10; lSt='pass'; lDt='No logo';
+
+      } else {
+
+        const sr=parseInt(imageSizeRatioInput.value), ecOK=(ecVal==='H');
+
+        if      (sr<=20 && ecOK) { lScore=10; lSt='pass'; lDt=`${sr}% — OK with H`; }
+
+        else if (sr<=20)         { lScore=7;  lSt='warn'; lDt=`${sr}% — set EC to H`; tips.push('Using a logo: switch Error Correction to High (H).'); }
+
+        else if (sr<=25 && ecOK) { lScore=6;  lSt='warn'; lDt=`${sr}% — borderline`; }
+
+        else                     { lScore=2;  lSt='fail'; lDt=`${sr}% — too large`;   tips.push('Logo is too large. Keep ≤20% and set Error Correction to High.'); }
+
       }
-    }catch(e){
-      alert('Please enter a valid URL starting with http:// or https://');
-      linkInput.focus();
-      return;
+
+      factors.push({icon:'🖼️', label:'Logo occlusion', score:lScore, max:10, status:lSt, detail:lDt});
+
+
+
+      const total = factors.reduce((s,f)=>s+f.score,0);
+
+      let grade, barColor;
+
+      if      (total>=85) { grade='excellent'; barColor='#10b981'; }
+
+      else if (total>=65) { grade='good';      barColor='#2c7be5'; }
+
+      else if (total>=45) { grade='fair';      barColor='#f59e0b'; }
+
+      else                { grade='poor';      barColor='#ef4444'; }
+
+
+
+      return {total, grade, barColor, factors, tip: tips[0]||''};
+
     }
 
-    // clear previous
-    qrContainer.innerHTML = '';
 
-    // create QR (qrcodejs) using the normalized URL
-    new QRCode(qrContainer, {
-      text: raw,
-      width: 300,
-      height: 300,
-      correctLevel: QRCode.CorrectLevel.H
+
+    function renderScanScore() {
+
+      const panel = document.getElementById('scanPanel');
+
+      if (!currentQRCode) { panel.style.display='none'; return; }
+
+      panel.style.display='';
+
+      const {total,grade,barColor,factors,tip} = computeScanabilityScore();
+
+      document.getElementById('scanScoreNum').textContent = total;
+
+      document.getElementById('scanScoreNum').className   = 'scan-score-num '+grade;
+
+      document.getElementById('scanBar').style.width      = total+'%';
+
+      document.getElementById('scanBar').style.background = barColor;
+
+      document.getElementById('scanBadge').className      = 'scan-badge '+grade;
+
+      document.getElementById('scanBadge').textContent    = grade.charAt(0).toUpperCase()+grade.slice(1);
+
+      document.getElementById('scanFactors').innerHTML    = factors.map(f=>`
+
+        <div class="scan-factor">
+
+          <span class="scan-factor-icon">${f.icon}</span>
+
+          <span class="scan-factor-label">${f.label}</span>
+
+          <span style="font-size:11px;color:#9ca3af;flex:1;text-align:right;padding-right:6px;">${f.detail}</span>
+
+          <span class="scan-factor-score ${f.status}">${f.score}/${f.max}</span>
+
+        </div>`).join('');
+
+      document.getElementById('scanTip').textContent = tip;
+
+    }
+
+
+
+    // ── Presets ───────────────────────────────────────────────────────────
+
+    const presets = {
+
+      classic: {dotsColor:'#000000',dotsType:'square',       cornersSquareColor:'#000000',cornersSquareType:'square',       cornersDotColor:'#000000',cornersDotType:'square',bgColor:'#ffffff'},
+
+      dark:    {dotsColor:'#ffffff',dotsType:'rounded',       cornersSquareColor:'#e0e0e0',cornersSquareType:'extra-rounded',cornersDotColor:'#e0e0e0',cornersDotType:'dot',   bgColor:'#1a1a1a'},
+
+      blue:    {dotsColor:'#0033cc',dotsType:'extra-rounded', cornersSquareColor:'#0022aa',cornersSquareType:'extra-rounded',cornersDotColor:'#0044ff',cornersDotType:'dot',   bgColor:'#ffffff'},
+
+      rainbow: {dotsColor:'#ff1744',dotsType:'extra-rounded', cornersSquareColor:'#00b0ff',cornersSquareType:'extra-rounded',cornersDotColor:'#00e676',cornersDotType:'dot',   bgColor:'#f5f5f5'},
+
+    };
+
+
+
+    // ── Build config ──────────────────────────────────────────────────────
+
+    function buildConfig(renderW, renderH) {
+
+      let ecLevel = errorCorrectionSelect.value;
+
+      if (currentImageData && ecLevel !== 'H') ecLevel = 'H';
+
+
+
+      const cfg = {
+
+        width:  renderW,
+
+        height: renderH,
+
+        type:   qrTypeSelect.value,
+
+        data:   linkInput.value.trim(),
+
+        margin: parseInt(marginInput.value),
+
+        dotsOptions: {
+
+          type:  dotsTypeSelect.value,
+
+          color: dotsColorInput.value,
+
+        },
+
+        cornersSquareOptions: {
+
+          type:  cornersSquareTypeSelect.value,
+
+          color: cornersSquareColorInput.value,
+
+        },
+
+        cornersDotOptions: {
+
+          type:  cornersDotTypeSelect.value,
+
+          color: cornersDotColorInput.value,
+
+        },
+
+        backgroundOptions: {
+
+          color: bgColorInput.value,
+
+        },
+
+        errorCorrectionLevel: ecLevel,
+
+      };
+
+
+
+      if (currentImageData) {
+
+        cfg.image = currentImageData;
+
+        cfg.imageOptions = {
+
+          crossOrigin:        'anonymous',
+
+          margin:             parseInt(imageMarginInput.value),
+
+          imageSize:          parseInt(imageSizeRatioInput.value) / 100,
+
+          hideBackgroundDots: hideBackgroundDots,
+
+          saveAsBlob:         true,
+
+        };
+
+      }
+
+
+
+      return cfg;
+
+    }
+
+
+
+    // ── Clear ─────────────────────────────────────────────────────────────
+
+    function clearQr() {
+
+      qrContainer.innerHTML = '';
+
+      downloadBtn.classList.remove('show');
+
+      currentQRCode = null;
+
+      document.getElementById('scanPanel').style.display = 'none';
+
+    }
+
+
+
+    // ── Generate ──────────────────────────────────────────────────────────
+
+    generateBtn.addEventListener('click', function () {
+
+      let raw = linkInput.value.trim();
+
+      downloadBtn.classList.remove('show');
+
+
+
+      if (!raw) { alert('Please enter a link.'); linkInput.focus(); return; }
+
+
+
+      if (!/^[a-zA-Z][a-zA-Z0-9+\-.]*:\/\//.test(raw)) {
+
+        raw = 'https://' + raw.replace(/^\/+/, '');
+
+        linkInput.value = raw;
+
+      }
+
+      try {
+
+        const u = new URL(raw);
+
+        if (u.protocol !== 'http:' && u.protocol !== 'https:') throw new Error();
+
+      } catch {
+
+        alert('Please enter a valid URL starting with http:// or https://');
+
+        linkInput.focus(); return;
+
+      }
+
+
+
+      clearQr();
+
+
+
+      const displayW = parseInt(widthInput.value);
+
+      const displayH = parseInt(heightInput.value);
+
+
+
+      // ── FIX: Update container to match chosen dimensions ──────────────
+
+      updateContainerSize();
+
+
+
+      // Render at DPR× for sharpness; the container CSS scales it down visually
+
+      const renderW = displayW;
+const renderH = displayH;
+
+
+
+      currentQRCode = new QRCodeStyling(buildConfig(renderW, renderH));
+
+      currentQRCode.append(qrContainer);
+
+
+
+      // Make the inner canvas/svg fill the container exactly
+
+      requestAnimationFrame(() => {
+  const child = qrContainer.firstElementChild;
+  if (child) {
+    child.style.width = '100%';
+    child.style.height = '100%';
+    child.style.maxWidth = '100%';
+    child.style.maxHeight = '100%';
+    child.style.objectFit = 'contain';
+    child.removeAttribute("width");
+    child.removeAttribute("height");
+  }
+});
+
+
+
+      downloadBtn.style.display = 'inline-block';
+
+      requestAnimationFrame(() => downloadBtn.classList.add('show'));
+
+      renderScanScore();
+
     });
 
-    // Poll for rendered canvas/img for up to 1s
-    const start = Date.now();
-    const poll = setInterval(()=>{
-      if(prepareDownloadFromRendered()){
-        clearInterval(poll);
-      } else if(Date.now() - start > 1000){
-        clearInterval(poll);
-        // final attempt
-        if(!prepareDownloadFromRendered()){
-          console.warn('QR rendered but could not prepare download automatically.');
-        }
+
+
+    // ── Logo upload ───────────────────────────────────────────────────────
+
+    imageInput.addEventListener('change', function (e) {
+
+      const file = e.target.files[0];
+
+      if (!file) return;
+
+
+
+      const loadViaReader = () => {
+
+        const reader = new FileReader();
+
+        reader.onload = ev => {
+
+          currentImageData = ev.target.result;
+
+          showPreview();
+
+          if (currentQRCode) generateBtn.click();
+
+        };
+
+        reader.readAsDataURL(file);
+
+      };
+
+
+
+      if (typeof createImageBitmap === 'function') {
+
+        createImageBitmap(file)
+
+          .then(bitmap => {
+
+            const c = document.createElement('canvas');
+
+            c.width  = bitmap.width;
+
+            c.height = bitmap.height;
+
+            const ctx = c.getContext('2d');
+
+            ctx.imageSmoothingEnabled = false;
+
+            ctx.drawImage(bitmap, 0, 0);
+
+            bitmap.close();
+
+            currentImageData = c.toDataURL('image/png');
+
+            showPreview();
+
+            if (currentQRCode) generateBtn.click();
+
+          })
+
+          .catch(loadViaReader);
+
+      } else {
+
+        loadViaReader();
+
       }
-    }, 80);
-  });
 
-  clearBtn.addEventListener('click', clearQr);
+    });
 
-  // Enter key triggers generation
-  linkInput.addEventListener('keydown', function(e){
-    if(e.key === 'Enter'){ e.preventDefault(); generateBtn.click(); }
-  });
 
-  // cleanup on unload
-  window.addEventListener('unload', revokeCurrentUrl);
-})();
+
+    function showPreview() {
+
+      imagePreview.innerHTML      = `<img src="${currentImageData}" alt="Logo preview" />`;
+
+      imagePreview.style.display  = 'flex';
+
+      imageRemove.style.display   = 'inline-block';
+
+    }
+
+
+
+    imageRemove.addEventListener('click', function () {
+
+      currentImageData            = null;
+
+      imageInput.value            = '';
+
+      imagePreview.innerHTML      = '';
+
+      imagePreview.style.display  = 'none';
+
+      imageRemove.style.display   = 'none';
+
+      if (currentQRCode) generateBtn.click();
+
+    });
+
+
+
+    // ── Download ──────────────────────────────────────────────────────────
+
+    downloadBtn.addEventListener('click', function (e) {
+
+      e.preventDefault();
+
+      if (!currentQRCode) return;
+
+
+
+      const filename = (filenameInput.value.trim() || 'qr-code')
+
+        .replace(/[^a-z0-9_\-\.]/gi, '_').replace(/_+/g,'_');
+
+      const ext = formatSelect.value;
+
+
+
+      if (ext === 'svg') {
+
+        currentQRCode.download({name: filename, extension: 'svg'});
+
+      } else {
+
+        const displayW  = parseInt(widthInput.value);
+
+        const displayH  = parseInt(heightInput.value);
+
+        const exportScale = Math.max(4, Math.ceil(1200 / Math.min(displayW, displayH)));
+
+        const exportCfg = buildConfig(displayW * exportScale, displayH * exportScale);
+
+        exportCfg.type  = 'canvas';
+
+        new QRCodeStyling(exportCfg).download({name: filename, extension: ext});
+
+      }
+
+    });
+
+
+
+    // ── Helpers ───────────────────────────────────────────────────────────
+
+    hideBackgroundDotsToggle.addEventListener('click', function () {
+
+      hideBackgroundDots = !hideBackgroundDots;
+
+      this.classList.toggle('active');
+
+      if (currentQRCode && linkInput.value.trim()) generateBtn.click();
+
+    });
+
+
+
+    presetButtons.forEach(btn => {
+
+      btn.addEventListener('click', function (e) {
+
+        e.preventDefault();
+
+        const p = presets[this.dataset.preset];
+
+        if (!p) return;
+
+        presetButtons.forEach(b => b.classList.remove('active'));
+
+        this.classList.add('active');
+
+        dotsColorInput.value          = p.dotsColor;
+
+        dotsTypeSelect.value          = p.dotsType;
+
+        cornersSquareColorInput.value = p.cornersSquareColor;
+
+        cornersSquareTypeSelect.value = p.cornersSquareType;
+
+        cornersDotColorInput.value    = p.cornersDotColor;
+
+        cornersDotTypeSelect.value    = p.cornersDotType;
+
+        bgColorInput.value            = p.bgColor;
+
+        if (linkInput.value.trim()) generateBtn.click();
+
+        else renderScanScore();
+
+      });
+
+    });
+
+
+
+    function syncSlider(input, displayId) {
+
+      document.getElementById(displayId).textContent = input.value;
+
+      updateContainerSize(); // ── FIX: update box size live as slider moves
+
+      if (currentQRCode && linkInput.value.trim()) generateBtn.click();
+
+    }
+
+    widthInput.addEventListener('input',  () => syncSlider(widthInput,  'widthValue'));
+
+    heightInput.addEventListener('input', () => syncSlider(heightInput, 'heightValue'));
+
+    marginInput.addEventListener('input', () => syncSlider(marginInput, 'marginValue'));
+
+
+
+    const liveInputs = [
+
+      dotsColorInput, dotsTypeSelect,
+
+      cornersSquareColorInput, cornersSquareTypeSelect,
+
+      cornersDotColorInput, cornersDotTypeSelect,
+
+      bgColorInput, imageMarginInput, imageSizeRatioInput,
+
+      errorCorrectionSelect, qrTypeSelect,
+
+    ];
+
+    liveInputs.forEach(el => {
+
+      el.addEventListener('change', () => {
+
+        if (currentQRCode && linkInput.value.trim()) generateBtn.click();
+
+        else if (currentQRCode) renderScanScore();
+
+      });
+
+    });
+
+
+
+    [widthInput, heightInput, marginInput].forEach(el => {
+
+      el.addEventListener('input', () => { if (currentQRCode) renderScanScore(); });
+
+    });
+
+
+
+    clearBtn.addEventListener('click', () => { clearQr(); linkInput.value=''; linkInput.focus(); });
+
+    linkInput.addEventListener('keydown', e => { if (e.key==='Enter') { e.preventDefault(); generateBtn.click(); } });
+
+
+
+  })();
+
 </script>
+
 </body>
+
 </html>
